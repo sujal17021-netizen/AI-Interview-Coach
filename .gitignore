@@ -1,0 +1,47 @@
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Python virtual environments
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Build files
+dist/
+build/
+
+# IDE and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Generated model and dataset files
+*.pth
+!ml/models/answer_evaluator.pth
+*.pt
+*.npy
+*.npz
+
+# ChromaDB generated database
+knowledge_base/vector_store/
+
+# Temporary files
+*.tmp

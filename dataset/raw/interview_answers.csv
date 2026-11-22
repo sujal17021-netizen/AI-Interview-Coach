@@ -1,0 +1,17 @@
+
+question,answer,score
+"What is Python?","Python is a high-level programming language known for readability and versatility.",9
+"What is Python?","Python is a programming language.",5
+"What is Python?","I don't know.",0
+"What is overfitting?","Overfitting occurs when a model learns training data too closely and performs poorly on unseen data.",10
+"What is overfitting?","Overfitting means the model memorizes training data and fails to generalize.",9
+"What is overfitting?","Overfitting is when a model is too simple.",2
+"What is supervised learning?","Supervised learning trains a model using labeled examples to predict outputs for new inputs.",10
+"What is supervised learning?","It is machine learning with labeled data.",7
+"What is supervised learning?","It means learning without any data.",1
+"What is gradient descent?","Gradient descent is an optimization algorithm that updates model parameters in the direction that reduces the loss function.",10
+"What is gradient descent?","It is used to minimize loss during model training.",8
+"What is gradient descent?","It is a programming language.",0
+"What is a neural network?","A neural network consists of connected layers of artificial neurons that learn patterns from data.",10
+"What is a neural network?","It is a model inspired by the human brain.",7
+"What is a neural network?","It is a database.",0
