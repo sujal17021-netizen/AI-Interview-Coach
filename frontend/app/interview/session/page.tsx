@@ -3,15 +3,24 @@
 
 import { useEffect, useState } from "react";
 
+type InterviewQuestion = {
+  question: string;
+  category: "Technical" | "HR";
+};
+
 type InterviewData = {
   role: string;
   difficulty: string;
+  interview_type: string;
+  duration: number;
   total_questions: number;
-  questions: string[];
+  generation_source: string;
+  questions: InterviewQuestion[];
 };
 
 type EvaluationResult = {
   question: string;
+  category: string;
   predicted_score: number;
   maximum_score: number;
   evaluation_type: string;
@@ -34,12 +43,35 @@ export default function InterviewSession() {
 
     if (saved) {
       try {
-        setInterview(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+
+        if (
+          !parsed ||
+          !Array.isArray(parsed.questions) ||
+          parsed.questions.length === 0 ||
+          !parsed.questions.every(
+  (q: unknown) =>
+    typeof q === "object" &&
+    q !== null &&
+    "question" in q &&
+    "category" in q &&
+    typeof q.question === "string" &&
+    (q.category === "Technical" || q.category === "HR")
+)
+        ) {
+          throw new Error("Invalid question format.");
+        }
+
+        setInterview(parsed);
       } catch {
-        setMessage("Invalid interview data. Please start a new interview.");
+        setMessage(
+          "Invalid interview data. Please start a new interview."
+        );
       }
     } else {
-      setMessage("No interview found. Please configure a new interview.");
+      setMessage(
+        "No interview found. Please configure a new interview."
+      );
     }
 
     setLoading(false);
@@ -61,6 +93,8 @@ export default function InterviewSession() {
     setSubmitting(true);
     setMessage("");
 
+    const questionItem = interview.questions[currentQuestion];
+
     try {
       const response = await fetch(
         "http://127.0.0.1:8000/answers/submit",
@@ -72,7 +106,7 @@ export default function InterviewSession() {
           body: JSON.stringify({
             candidate_name: candidateName.trim(),
             role: interview.role,
-            question: interview.questions[currentQuestion],
+            question: questionItem.question,
             answer: answer.trim(),
           }),
         }
@@ -81,7 +115,9 @@ export default function InterviewSession() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || "Answer submission failed.");
+        throw new Error(
+          data.detail || "Answer submission failed."
+        );
       }
 
       const evaluation = data.evaluation;
@@ -90,17 +126,23 @@ export default function InterviewSession() {
         !evaluation ||
         typeof evaluation.predicted_score !== "number"
       ) {
-        throw new Error("The backend did not return a valid ML score.");
+        throw new Error(
+          "The backend did not return a valid ML score."
+        );
       }
 
       const newResult: EvaluationResult = {
-        question: interview.questions[currentQuestion],
+        question: questionItem.question,
+        category: questionItem.category,
         predicted_score: evaluation.predicted_score,
         maximum_score: evaluation.maximum_score,
         evaluation_type: evaluation.evaluation_type,
       };
 
-      setEvaluationResults((previous) => [...previous, newResult]);
+      setEvaluationResults((previous) => [
+        ...previous,
+        newResult,
+      ]);
 
       if (currentQuestion === interview.questions.length - 1) {
         setCompleted(true);
@@ -122,7 +164,11 @@ export default function InterviewSession() {
   }
 
   if (loading) {
-    return <main className="session-page">Loading interview...</main>;
+    return (
+      <main className="session-page">
+        Loading interview...
+      </main>
+    );
   }
 
   if (!interview) {
@@ -163,7 +209,9 @@ export default function InterviewSession() {
           </p>
 
           <div className="evaluation-summary">
-            <div className="score-label">YOUR AVERAGE ML SCORE</div>
+            <div className="score-label">
+              YOUR AVERAGE ML SCORE
+            </div>
 
             <div className="average-score">
               {averageScore.toFixed(2)}
@@ -175,13 +223,17 @@ export default function InterviewSession() {
             </p>
           </div>
 
-          <h2 className="results-heading">Question-wise results</h2>
+          <h2 className="results-heading">
+            Question-wise results
+          </h2>
 
           <div className="results-list">
             {evaluationResults.map((result, index) => (
               <div className="result-item" key={index}>
                 <div className="result-question">
-                  <span>QUESTION {index + 1}</span>
+                  <span>
+                    QUESTION {index + 1} · {result.category.toUpperCase()}
+                  </span>
                   <p>{result.question}</p>
                 </div>
 
@@ -207,6 +259,8 @@ export default function InterviewSession() {
     );
   }
 
+  const questionItem = interview.questions[currentQuestion];
+
   const progress =
     ((currentQuestion + 1) / interview.questions.length) * 100;
 
@@ -224,10 +278,14 @@ export default function InterviewSession() {
 
       <section className="session-container">
         <div className="session-heading">
-          <div className="eyebrow">YOUR PERSONAL AI INTERVIEWER</div>
+          <div className="eyebrow">
+            YOUR PERSONAL AI INTERVIEWER
+          </div>
+
           <h1>
             Show what <span>you know.</span>
           </h1>
+
           <p>
             {interview.role} · {interview.difficulty} difficulty
           </p>
@@ -247,10 +305,18 @@ export default function InterviewSession() {
             <div style={{ width: `${progress}%` }} />
           </div>
 
-          <div className="question-label">INTERVIEW QUESTION</div>
+          <div className="question-label">
+            INTERVIEW QUESTION
+          </div>
+
+          <div className="question-category">
+            {questionItem.category === "Technical"
+              ? "💻 TECHNICAL QUESTION"
+              : "👤 HR QUESTION"}
+          </div>
 
           <h2 className="question-text">
-            {interview.questions[currentQuestion]}
+            {questionItem.question}
           </h2>
 
           <div className="candidate-field">
@@ -259,7 +325,9 @@ export default function InterviewSession() {
             <input
               id="candidate"
               value={candidateName}
-              onChange={(e) => setCandidateName(e.target.value)}
+              onChange={(e) =>
+                setCandidateName(e.target.value)
+              }
               placeholder="Enter your name"
               disabled={currentQuestion > 0}
             />

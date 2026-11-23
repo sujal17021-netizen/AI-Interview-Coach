@@ -14,6 +14,9 @@ type InterviewConfig = {
 type QuestionResponse = {
   role: string;
   difficulty: string;
+  interview_type: string;
+  duration: number;
+  requested_questions: number;
   total_questions: number;
   questions: string[];
 };
@@ -41,12 +44,24 @@ export default function InterviewSetup() {
     };
 
     try {
+      const params = new URLSearchParams({
+        role: config.role,
+        difficulty: config.difficulty,
+        interview_type: config.type,
+        question_count: config.questionCount,
+        duration: config.duration,
+      });
+
       const response = await fetch(
-        `http://127.0.0.1:8000/questions/?role=${encodeURIComponent(config.role)}&difficulty=${encodeURIComponent(config.difficulty)}`
+        `http://127.0.0.1:8000/questions/?${params.toString()}`
       );
 
       if (!response.ok) {
-        throw new Error(`Backend returned error: ${response.status}`);
+        const errorData = await response.json();
+
+        throw new Error(
+          errorData.detail || `Backend error: ${response.status}`
+        );
       }
 
       const data: QuestionResponse = await response.json();
@@ -67,7 +82,9 @@ export default function InterviewSetup() {
       console.error("Interview API error:", err);
 
       setError(
-        "Unable to connect to the interview server. Make sure FastAPI is running on port 8000."
+        err instanceof Error
+          ? err.message
+          : "Unable to connect to the interview server."
       );
     } finally {
       setLoading(false);
@@ -77,14 +94,24 @@ export default function InterviewSetup() {
   return (
     <main className="interview-page">
       <header className="interview-header">
-        <a href="/" className="back-link">← Back to Dashboard</a>
-        <span className="setup-status"><i /> AI INTERVIEW SETUP</span>
+        <a href="/" className="back-link">
+          ← Back to Dashboard
+        </a>
+        <span className="setup-status">
+          <i /> AI INTERVIEW SETUP
+        </span>
       </header>
 
       <section className="interview-intro">
-        <div className="eyebrow">YOUR NEXT CAREER MOVE STARTS HERE</div>
-        <h1>Design your <span>interview.</span></h1>
-        <p>Customize your practice session and let your AI interviewer take it from there.</p>
+        <div className="eyebrow">
+          YOUR NEXT CAREER MOVE STARTS HERE
+        </div>
+        <h1>
+          Design your <span>interview.</span>
+        </h1>
+        <p>
+          Customize your practice session and let your AI interviewer take it from there.
+        </p>
       </section>
 
       <div className="interview-layout">
@@ -99,7 +126,11 @@ export default function InterviewSetup() {
 
           <div className="field-group">
             <label htmlFor="role">TARGET JOB ROLE</label>
-            <select id="role" value={role} onChange={(e) => setRole(e.target.value)}>
+            <select
+              id="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
               <option>Python Developer</option>
               <option>Machine Learning Engineer</option>
               <option>Data Scientist</option>
@@ -116,13 +147,27 @@ export default function InterviewSetup() {
               {["Technical", "HR", "Mixed"].map((item) => (
                 <button
                   key={item}
-                  className={`choice-card ${type === item ? "selected" : ""}`}
+                  className={`choice-card ${
+                    type === item ? "selected" : ""
+                  }`}
                   onClick={() => setType(item)}
                   type="button"
                 >
-                  <span>{item === "Technical" ? "⌘" : item === "HR" ? "♙" : "◈"}</span>
+                  <span>
+                    {item === "Technical"
+                      ? "⌘"
+                      : item === "HR"
+                      ? "♙"
+                      : "◈"}
+                  </span>
                   <strong>{item}</strong>
-                  <small>{item === "Technical" ? "Technical skills" : item === "HR" ? "Behavioral questions" : "Both formats"}</small>
+                  <small>
+                    {item === "Technical"
+                      ? "Technical skills"
+                      : item === "HR"
+                      ? "Behavioral questions"
+                      : "Both formats"}
+                  </small>
                 </button>
               ))}
             </div>
@@ -135,8 +180,14 @@ export default function InterviewSetup() {
                 <button
                   key={item}
                   type="button"
-                  className={`difficulty-option ${difficulty === item.toLowerCase() ? "selected" : ""}`}
-                  onClick={() => setDifficulty(item.toLowerCase())}
+                  className={`difficulty-option ${
+                    difficulty === item.toLowerCase()
+                      ? "selected"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    setDifficulty(item.toLowerCase())
+                  }
                 >
                   {item}
                 </button>
@@ -148,8 +199,16 @@ export default function InterviewSetup() {
 
           <div className="field-grid">
             <div className="field-group">
-              <label htmlFor="questions">NUMBER OF QUESTIONS</label>
-              <select id="questions" value={questionCount} onChange={(e) => setQuestionCount(e.target.value)}>
+              <label htmlFor="questions">
+                NUMBER OF QUESTIONS
+              </label>
+              <select
+                id="questions"
+                value={questionCount}
+                onChange={(e) =>
+                  setQuestionCount(e.target.value)
+                }
+              >
                 <option value="3">3 Questions</option>
                 <option value="5">5 Questions</option>
                 <option value="10">10 Questions</option>
@@ -159,7 +218,13 @@ export default function InterviewSetup() {
 
             <div className="field-group">
               <label htmlFor="duration">DURATION</label>
-              <select id="duration" value={duration} onChange={(e) => setDuration(e.target.value)}>
+              <select
+                id="duration"
+                value={duration}
+                onChange={(e) =>
+                  setDuration(e.target.value)
+                }
+              >
                 <option value="15">15 Minutes</option>
                 <option value="30">30 Minutes</option>
                 <option value="45">45 Minutes</option>
@@ -168,14 +233,18 @@ export default function InterviewSetup() {
             </div>
           </div>
 
-          {error && <p className="error-message">{error}</p>}
+          {error && (
+            <p className="error-message">{error}</p>
+          )}
 
           <button
             className="start-interview-button"
             onClick={handleStart}
             disabled={loading}
           >
-            {loading ? "Preparing your interview..." : "Start Interview"}
+            {loading
+              ? "Preparing your interview..."
+              : "Start Interview"}
             <span>{loading ? "..." : "→"}</span>
           </button>
 
@@ -186,21 +255,41 @@ export default function InterviewSetup() {
 
         <aside className="interview-sidebar">
           <div className="preview-card">
-            <div className="preview-label">SESSION PREVIEW</div>
+            <div className="preview-label">
+              SESSION PREVIEW
+            </div>
             <div className="preview-art">AI</div>
             <h3>{role}</h3>
             <p>Your personalized interview session</p>
             <div className="preview-divider" />
-            <div className="preview-detail"><span>Interview type</span><strong>{type}</strong></div>
-            <div className="preview-detail"><span>Difficulty</span><strong>{difficulty}</strong></div>
-            <div className="preview-detail"><span>Questions</span><strong>{questionCount}</strong></div>
-            <div className="preview-detail"><span>Duration</span><strong>{duration} min</strong></div>
+
+            <div className="preview-detail">
+              <span>Interview type</span>
+              <strong>{type}</strong>
+            </div>
+
+            <div className="preview-detail">
+              <span>Difficulty</span>
+              <strong>{difficulty}</strong>
+            </div>
+
+            <div className="preview-detail">
+              <span>Questions</span>
+              <strong>{questionCount}</strong>
+            </div>
+
+            <div className="preview-detail">
+              <span>Duration</span>
+              <strong>{duration} min</strong>
+            </div>
           </div>
 
           <div className="tip-card">
             <div className="tip-icon">✦</div>
             <strong>Pro preparation tip</strong>
-            <p>Answer with specific examples. Explain your thought process, not just the final result.</p>
+            <p>
+              Answer with specific examples. Explain your thought process, not just the final result.
+            </p>
           </div>
         </aside>
       </div>
