@@ -314,7 +314,7 @@ export default function InterviewSession() {
             {aiResults.length > 0 ? (
               <div className="ai-scores">
                 <p>
-                  Technical Accuracy
+                  Technical Accuracy / Authenticity
                   <strong>
                     {averageAI("technical_accuracy")}/10
                   </strong>
@@ -387,7 +387,9 @@ export default function InterviewSession() {
                     <div className="ai-scores">
 
                       <p>
-                        Technical Accuracy
+                        {result.category === "HR"
+    ? "Authenticity"
+    : "Technical Accuracy"}
                         <strong>
                           {result.ai_evaluation.technical_accuracy}/10
                         </strong>
