@@ -33,14 +33,16 @@ client = genai.Client(api_key=API_KEY)
 QUESTION_MODEL = "gemini-3.5-flash"
 
 EVALUATION_MODELS = [
-    "gemini-3.8-flash",
-    "gemini-3.5-flash-lite"
+     "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
 ]
 
 
 # ==========================================
 # COMMON GEMINI GENERATION WITH FALLBACK
 # ==========================================
+
+
 
 def generate_json_with_fallback(
     prompt: str,
@@ -49,18 +51,20 @@ def generate_json_with_fallback(
 ):
     """
     Generate JSON using Gemini models.
-    Retries temporary errors and switches models
-    when a model is unavailable.
+
+    Retries temporary 503 and 429 errors using
+    exponential backoff, then switches models.
     """
 
     last_error = None
+    max_retries = 2
 
     for model in models:
 
-        for attempt in range(2):
+        for attempt in range(max_retries + 1):
 
             try:
-                logger.info(
+                logger.warning(
                     "Trying Gemini model %s, attempt %s",
                     model,
                     attempt + 1
@@ -81,6 +85,12 @@ def generate_json_with_fallback(
                     )
 
                 return json.loads(response.text)
+                logger.warning(
+                     "GEMINI SUCCESS: model=%s, attempt=%s",
+    model,
+    attempt + 1
+)
+                return result
 
             except Exception as error:
 
@@ -93,24 +103,38 @@ def generate_json_with_fallback(
                     error
                 )
 
-                # Retry temporary server and rate-limit errors
-                if "503" in error_text or "429" in error_text:
+                is_temporary = (
+                    "503" in error_text
+                    or "429" in error_text
+                )
 
-                    if attempt == 0:
-                        logger.info(
-                            "Retrying %s after 2 seconds.",
-                            model
-                        )
+                if is_temporary and attempt < max_retries:
 
-                        time.sleep(2)
-                        continue
+                    # Calculate wait time BEFORE logging it
+                    wait_time = 2 ** (attempt + 1)
 
-                # Do not repeatedly retry permanent errors
+                    logger.warning(
+                        "RETRYING GEMINI: model=%s, "
+                        "attempt=%s, waiting=%s seconds",
+                        model,
+                        attempt + 1,
+                        wait_time
+                    )
+
+                    time.sleep(wait_time)
+                    continue
+
+                logger.warning(
+                    "Moving to the next Gemini model."
+                )
+
                 break
 
     raise RuntimeError(
         "All configured Gemini models failed."
     ) from last_error
+
+
 
 
 # ==========================================
