@@ -1,0 +1,41 @@
+PYTHON PROGRAMMING - INTERVIEW KNOWLEDGE
+
+1. Python Data Types
+Python has built-in data types including int, float, str, bool, list, tuple, set and dict.
+
+2. Lists
+A list is an ordered and mutable collection. It allows duplicate values.
+Example: numbers = [10, 20, 30]
+Common methods: append(), insert(), remove(), pop(), sort().
+
+3. Tuples
+A tuple is an ordered and immutable collection. It allows duplicate values.
+Example: coordinates = (10, 20)
+
+4. Dictionaries
+A dictionary stores data in key-value pairs.
+Example: student = {"name": "Rahul", "age": 21}
+Common methods: keys(), values(), items(), get(), update().
+
+5. Sets
+A set is an unordered collection of unique elements.
+Example: values = {1, 2, 3}
+
+6. Functions
+Functions are reusable blocks of code defined using the def keyword.
+Example:
+def add(a, b):
+    return a + b
+
+7. OOP Concepts
+The four main OOP concepts are encapsulation, inheritance, polymorphism and abstraction.
+
+8. Exception Handling
+Python uses try, except, else and finally to handle runtime errors.
+
+9. List Comprehension
+List comprehension creates lists using a concise syntax.
+Example: squares = [x*x for x in range(5)]
+
+10. Python Interview Tip
+When answering a Python interview question, explain the definition, syntax, practical example and use case.

@@ -145,7 +145,8 @@ def generate_interview_questions(
     role: str,
     difficulty: str,
     interview_type: str,
-    question_count: int
+    question_count: int,
+    context: str = ""
 ):
 
     prompt = f"""
@@ -157,6 +158,12 @@ Candidate details:
 Job Role: {role}
 Difficulty: {difficulty}
 Interview Type: {interview_type}
+Relevant Knowledge Retrieved from RAG:
+{context}
+
+Use the retrieved knowledge when relevant to generate accurate,
+role-specific technical questions. Do not force unrelated
+knowledge into the questions.
 
 Instructions:
 

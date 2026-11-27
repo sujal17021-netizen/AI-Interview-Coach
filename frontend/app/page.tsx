@@ -1,16 +1,25 @@
+"use client";
+import { useEffect, useState } from "react";
 
-const stats = [
-  { label: "Interview Completed", value: "12", change: "+3 this week", icon: "◫" },
-  { label: "Average Score", value: "78%", change: "+8% improvement", icon: "↗" },
-  { label: "Practice Hours", value: "8.5h", change: "This month", icon: "◷" },
-  { label: "Skills Improved", value: "06", change: "Across 4 topics", icon: "✧" },
-];
+type Interview = {
+  interview_id: number;
+  role: string;
+  interview_type: string;
+  difficulty: string;
+  date: string | null;
+  status: string;
+  total_questions: number;
+  answered_questions: number;
+  average_score: number | null;
+};
 
-const interview = [
-  { role: "Python Developer", date: "Today · 10:30 AM", score: "82%", status: "Completed" },
-  { role: "Machine Learning Engineer", date: "Yesterday · 4:15 PM", score: "76%", status: "Completed" },
-  { role: "Data Analyst", date: "18 Nov · 11:00 AM", score: "71%", status: "Completed" },
-];
+type InterviewHistory = {
+  total_interviews: number;
+  interviews: Interview[];
+};
+
+
+
 
 const skills = [
   { name: "Python", score: 85 },
@@ -20,6 +29,87 @@ const skills = [
 ];
 
 export default function Home() {
+  const [history, setHistory] = useState<InterviewHistory>({
+  total_interviews: 0,
+  interviews: [],
+});
+
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState("");
+
+useEffect(() => {
+  async function fetchHistory() {
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/interviews/history"
+      );
+
+      if (!response.ok) {
+        throw new Error("Unable to load interview history.");
+      }
+
+      const data: InterviewHistory = await response.json();
+
+      setHistory(data);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  fetchHistory();
+}, []);
+const completedInterviews = history.interviews.filter(
+  (item) => item.status === "Completed"
+).length;
+
+const allScores = history.interviews
+  .map((item) => item.average_score)
+  .filter((score): score is number => score !== null);
+
+const averageScore = allScores.length
+  ? (
+      allScores.reduce((sum, score) => sum + score, 0) /
+      allScores.length
+    ) * 10
+  : 0;
+
+const totalAnswered = history.interviews.reduce(
+  (sum, item) => sum + item.answered_questions,
+  0
+);
+
+const stats = [
+  {
+    label: "Interviews Completed",
+    value: String(completedInterviews),
+    change: "From your database",
+    icon: "◉",
+  },
+  {
+    label: "Average Score",
+    value: `${averageScore.toFixed(1)}%`,
+    change: "Based on PyTorch scores",
+    icon: "↗",
+  },
+  {
+    label: "Questions Answered",
+    value: String(totalAnswered),
+    change: "Across all interviews",
+    icon: "◷",
+  },
+  {
+    label: "Total Interviews",
+    value: String(history.total_interviews),
+    change: "Completed and in progress",
+    icon: "✧",
+  },
+];
   return (
     <main className="dashboard">
       <aside className="sidebar">
@@ -120,29 +210,55 @@ export default function Home() {
 
           <section className="lower-grid">
             <div className="panel" id="interview">
-              <div className="panel-heading">
-                <div>
-                  <h3>Recent Interview</h3>
-                  <p>Your latest practice sessions</p>
-                </div>
-                <a href="interview">View all →</a>
-              </div>
+  <div className="panel-heading">
+    <div>
+      <h3>Recent Interviews</h3>
+      <p>Your latest practice sessions</p>
+    </div>
+
+    <a href="/interview">Start New →</a>
+  </div>
+
+  <div className="interview-list">
+    {/* Keep your dynamic interview-list code here */}
+  </div>
+</div>
               <div className="interview-list">
-                {interview.map((interview) => (
-                  <div className="interview-row" key={interview.role}>
-                    <div className="interview-symbol">◈</div>
-                    <div className="interview-details">
-                      <strong>{interview.role}</strong>
-                      <span>{interview.date}</span>
-                    </div>
-                    <div className="interview-result">
-                      <strong>{interview.score}</strong>
-                      <span>{interview.status}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+  {loading ? (
+    <p>Loading interviews...</p>
+  ) : error ? (
+    <p>{error}</p>
+  ) : history.interviews.length === 0 ? (
+    <p>No interviews yet. Start your first interview!</p>
+  ) : (
+    history.interviews.slice(0, 5).map((item) => (
+      <div
+        className="interview-row"
+        key={item.interview_id}
+      >
+        <div className="interview-symbol">◈</div>
+
+        <div className="interview-details">
+          <strong>{item.role}</strong>
+          <span>
+            {item.date
+              ? new Date(item.date).toLocaleString()
+              : "Date unavailable"}
+          </span>
+        </div>
+
+        <div className="interview-result">
+          <strong>
+            {item.average_score !== null
+              ? `${(item.average_score * 10).toFixed(1)}%`
+              : "—"}
+          </strong>
+          <span>{item.status}</span>
+        </div>
+      </div>
+    ))
+  )}
+</div>
 
             <div className="panel" id="analytics">
               <div className="panel-heading">

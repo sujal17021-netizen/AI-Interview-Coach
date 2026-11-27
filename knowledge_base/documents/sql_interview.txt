@@ -1,0 +1,29 @@
+SQL DATABASE INTERVIEW KNOWLEDGE
+
+1. SQL
+SQL stands for Structured Query Language. It is used to manage relational databases.
+
+2. SQL Commands
+DDL: CREATE, ALTER, DROP.
+DML: INSERT, UPDATE, DELETE.
+DQL: SELECT.
+DCL: GRANT, REVOKE.
+TCL: COMMIT, ROLLBACK.
+
+3. Primary Key
+A primary key uniquely identifies each row in a table. It cannot contain NULL values.
+
+4. Foreign Key
+A foreign key connects two tables by referencing a key in another table.
+
+5. Joins
+INNER JOIN returns matching rows.
+LEFT JOIN returns all rows from the left table and matching rows from the right.
+RIGHT JOIN returns all rows from the right table and matching rows from the left.
+FULL JOIN returns matching and non-matching rows from both tables.
+
+6. Normalization
+Normalization organizes database tables to reduce data redundancy and improve data integrity.
+
+7. Aggregate Functions
+COUNT(), SUM(), AVG(), MIN() and MAX() perform calculations on data.

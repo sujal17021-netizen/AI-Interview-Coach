@@ -10,15 +10,22 @@ type InterviewConfig = {
   questionCount: string;
   duration: string;
 };
+type InterviewQuestion = {
+  question_id: number;
+  question: string;
+  category: "Technical" | "HR";
+};
 
 type QuestionResponse = {
   role: string;
+  interview_id: number;
   difficulty: string;
   interview_type: string;
   duration: number;
   requested_questions: number;
   total_questions: number;
-  questions: string[];
+  questions: InterviewQuestion[];
+  generation_source: string;
 };
 
 export default function InterviewSetup() {

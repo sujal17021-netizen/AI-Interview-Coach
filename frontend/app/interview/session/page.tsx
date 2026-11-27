@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 // Interview question structure
 type InterviewQuestion = {
+  question_id: number;
   question: string;
   category: "Technical" | "HR";
 };
@@ -75,8 +76,11 @@ export default function InterviewSession() {
             (q: unknown) =>
               typeof q === "object" &&
               q !== null &&
+              "question_id" in q &&
               "question" in q &&
               "category" in q &&
+              typeof q.question_id === "number" &&
+              q.question_id > 0 &&
               typeof q.question === "string" &&
               (q.category === "Technical" ||
                 q.category === "HR")
@@ -133,6 +137,7 @@ export default function InterviewSession() {
             candidate_name: candidateName.trim(),
             role: interview.role,
             question: questionItem.question,
+            question_id: questionItem.question_id,
             answer: answer.trim(),
             category: questionItem.category,
           }),

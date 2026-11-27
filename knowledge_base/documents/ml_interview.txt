@@ -1,0 +1,34 @@
+MACHINE LEARNING INTERVIEW KNOWLEDGE
+
+1. Machine Learning
+Machine Learning enables computers to learn patterns from data and make predictions.
+
+2. Supervised Learning
+The model learns from labeled data.
+Examples: classification and regression.
+
+3. Unsupervised Learning
+The model discovers patterns in unlabeled data.
+Examples: clustering and dimensionality reduction.
+
+4. Reinforcement Learning
+An agent learns by interacting with an environment and receiving rewards or penalties.
+
+5. Classification
+Classification predicts discrete categories, such as spam or not spam.
+
+6. Regression
+Regression predicts continuous numerical values, such as house prices.
+
+7. Overfitting
+Overfitting occurs when a model learns training data too closely and performs poorly on unseen data.
+
+8. Underfitting
+Underfitting occurs when a model fails to learn important patterns from the training data.
+
+9. Train-Test Split
+Data is divided into training and testing sets to evaluate model performance on unseen examples.
+
+10. Evaluation Metrics
+Classification metrics include accuracy, precision, recall and F1-score.
+Regression metrics include MAE, MSE and RMSE.

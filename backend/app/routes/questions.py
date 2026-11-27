@@ -1,16 +1,19 @@
-from fastapi import Depends
+
+from fastapi import Depends, APIRouter, HTTPException, Query
 from sqlalchemy.orm import Session
+
+import random
+import logging
 
 from backend.app.database import get_db
 from backend.app import models
-from fastapi import APIRouter, HTTPException, Query
-import random
-import logging
 
 from backend.app.services.question_bank import question_bank
 from backend.app.services.gemini_service import (
     generate_interview_questions
 )
+from backend.app.services.rag_service import retrieve_context
+
 
 router = APIRouter(
     prefix="/questions",
@@ -57,14 +60,37 @@ def get_questions(
     technical_questions = role_data["technical"][difficulty]
     hr_questions = role_data["hr"]
 
-    # Try Gemini first
+    selected_questions = None
+
+    # Generate questions using RAG + Gemini
     if use_ai:
         try:
+
+            # Retrieve relevant knowledge using RAG
+            rag_context = ""
+
+            if interview_type in ["Technical", "Mixed"]:
+                try:
+                    rag_context = retrieve_context(
+                        f"{role} {difficulty} technical interview concepts",
+                        top_k=3
+                    )
+                    logger.info(
+                        "RAG knowledge retrieved successfully."
+                    )
+
+                except Exception:
+                    logger.exception(
+                        "RAG retrieval failed. Continuing without context."
+                    )
+
+            # Generate questions using Gemini
             selected_questions = generate_interview_questions(
                 role=role,
                 difficulty=difficulty,
                 interview_type=interview_type,
-                question_count=question_count
+                question_count=question_count,
+                context=rag_context
             )
 
             # Verify question categories
@@ -73,15 +99,18 @@ def get_questions(
                     q["category"] == "Technical"
                     for q in selected_questions
                 )
+
             elif interview_type == "HR":
                 valid = all(
                     q["category"] == "HR"
                     for q in selected_questions
                 )
+
             else:
                 categories = [
                     q["category"] for q in selected_questions
                 ]
+
                 valid = (
                     categories.count("Technical")
                     == (question_count + 1) // 2
@@ -94,16 +123,13 @@ def get_questions(
                     "Gemini returned incorrect question categories."
                 )
 
-            source = "Gemini AI"
+            source = "Gemini AI + RAG"
 
         except Exception:
             logger.exception(
                 "Gemini question generation failed. Using fallback."
             )
             selected_questions = None
-
-    else:
-        selected_questions = None
 
     # Fallback to predefined question bank
     if selected_questions is None:
@@ -133,6 +159,7 @@ def get_questions(
             selected_questions = random.sample(
                 technical_questions, question_count
             )
+
             selected_questions = [
                 {
                     "question": q,
@@ -145,6 +172,7 @@ def get_questions(
             selected_questions = random.sample(
                 hr_questions, question_count
             )
+
             selected_questions = [
                 {
                     "question": q,
@@ -181,7 +209,6 @@ def get_questions(
 
         source = "Predefined Question Bank"
 
-
     # Save interview and questions in Supabase
     try:
         new_interview = models.Interview(
@@ -196,7 +223,9 @@ def get_questions(
 
         saved_questions = []
 
-        for index, question_data in enumerate(selected_questions, start=1):
+        for index, question_data in enumerate(
+            selected_questions, start=1
+        ):
             new_question = models.Question(
                 interview_id=new_interview.id,
                 question_text=question_data["question"],
@@ -217,7 +246,10 @@ def get_questions(
 
     except Exception:
         db.rollback()
-        logger.exception("Failed to save interview in database.")
+
+        logger.exception(
+            "Failed to save interview in database."
+        )
 
         raise HTTPException(
             status_code=500,
@@ -235,4 +267,3 @@ def get_questions(
         "generation_source": source,
         "questions": saved_questions
     }
-    
