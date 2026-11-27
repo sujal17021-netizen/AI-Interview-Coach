@@ -1,4 +1,8 @@
+from fastapi import Depends
+from sqlalchemy.orm import Session
 
+from backend.app.database import get_db
+from backend.app import models
 from fastapi import APIRouter, HTTPException, Query
 import random
 import logging
@@ -19,6 +23,7 @@ logger = logging.getLogger(__name__)
 @router.get("/")
 def get_questions(
     role: str = "Python Developer",
+    db: Session = Depends(get_db),
     difficulty: str = "easy",
     interview_type: str = "Technical",
     question_count: int = Query(default=3, ge=1, le=20),
@@ -176,13 +181,58 @@ def get_questions(
 
         source = "Predefined Question Bank"
 
+
+    # Save interview and questions in Supabase
+    try:
+        new_interview = models.Interview(
+            role=role,
+            interview_type=interview_type,
+            difficulty=difficulty,
+            status="In Progress"
+        )
+
+        db.add(new_interview)
+        db.flush()
+
+        saved_questions = []
+
+        for index, question_data in enumerate(selected_questions, start=1):
+            new_question = models.Question(
+                interview_id=new_interview.id,
+                question_text=question_data["question"],
+                category=question_data["category"],
+                order_index=index
+            )
+
+            db.add(new_question)
+            db.flush()
+
+            saved_questions.append({
+                "question_id": new_question.id,
+                "question": question_data["question"],
+                "category": question_data["category"]
+            })
+
+        db.commit()
+
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to save interview in database.")
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save interview and questions."
+        )
+
     return {
+        "interview_id": new_interview.id,
         "role": role,
         "difficulty": difficulty,
         "interview_type": interview_type,
         "duration": duration,
         "requested_questions": question_count,
-        "total_questions": len(selected_questions),
+        "total_questions": len(saved_questions),
         "generation_source": source,
-        "questions": selected_questions
+        "questions": saved_questions
     }
+    
